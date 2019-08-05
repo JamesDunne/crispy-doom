@@ -611,7 +611,7 @@ P_CrossSpecialLinePtr
 	  case MT_TROOPSHOT:
 	  case MT_HEADSHOT:
 	  case MT_BRUISERSHOT:
-	    return;
+	    if (line->special != 39 && line->special != 97) return;
 	    break;
 	    
 	  default: break;
