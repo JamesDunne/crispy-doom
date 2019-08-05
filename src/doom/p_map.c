@@ -173,11 +173,14 @@ P_TeleportMove
     yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
     yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
-    for (bx=xl ; bx<=xh ; bx++)
-	for (by=yl ; by<=yh ; by++)
-	    if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
-		return false;
-    
+    if (!(thing->flags & MF_MISSILE))
+    {
+	for (bx=xl ; bx<=xh ; bx++)
+	    for (by=yl ; by<=yh ; by++)
+		if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
+		    return false;
+    }
+
     // the move is ok,
     // so link the thing into its new position
     P_UnsetThingPosition (thing);

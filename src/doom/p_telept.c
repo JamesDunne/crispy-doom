@@ -54,10 +54,13 @@ EV_Teleport
     fixed_t	oldx;
     fixed_t	oldy;
     fixed_t	oldz;
+    angle_t oldangle;
+    fixed_t	oldmomx;
+    fixed_t	oldmomy;
 
     // don't teleport missiles
-    if (thing->flags & MF_MISSILE)
-	return 0;		
+    //if (thing->flags & MF_MISSILE)
+	//return 0;		
 
     // Don't teleport if hit back of line,
     //  so you can get out of teleporter.
@@ -93,7 +96,10 @@ EV_Teleport
 		oldx = thing->x;
 		oldy = thing->y;
 		oldz = thing->z;
-				
+		oldangle = thing->angle;
+		oldmomx = thing->momx;
+		oldmomy = thing->momy;
+
 		if (!P_TeleportMove (thing, m->x, m->y))
 		    return 0;
 
@@ -112,22 +118,49 @@ EV_Teleport
 		    thing->player->centering = true;
 		}
 
-		// spawn teleport fog at source and destination
-		fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
-		S_StartSound (fog, sfx_telept);
-		an = m->angle >> ANGLETOFINESHIFT;
-		fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
-				   , thing->z, MT_TFOG);
-
-		// emit sound, where?
-		S_StartSound (fog, sfx_telept);
-		
 		// don't move for a bit
 		if (thing->player)
 		    thing->reactiontime = 18;	
 
 		thing->angle = m->angle;
-		thing->momx = thing->momy = thing->momz = 0;
+		if (thing->flags & MF_MISSILE)
+		{
+		    // determine rotation angle from previous angle to new angle:
+		    angle_t rotation = m->angle - oldangle;
+		    fixed_t s = finesine[rotation>>ANGLETOFINESHIFT];
+		    fixed_t c = finecosine[rotation>>ANGLETOFINESHIFT];
+		    // move missile up above floorz to the height missiles are normally spawned at above the floor:
+		    thing->z += 4*8*FRACUNIT;
+		    // rotate momentum to the new angle:
+		    thing->momx = FixedMul(oldmomx, c) - FixedMul(oldmomy, s);
+		    thing->momy = FixedMul(oldmomy, c) + FixedMul(oldmomx, s);
+		    // kill Z momentum so missiles don't fly upwards or downwards out of teleporter:
+		    thing->momz = 0;
+
+		    // spawn teleport fog at source and destination
+		    fog = P_SpawnMobj (oldx, oldy, oldz - 4*8*FRACUNIT, MT_TFOG);
+		    S_StartSound (fog, sfx_telept);
+		    an = m->angle >> ANGLETOFINESHIFT;
+		    fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
+				   , thing->z - 4*8*FRACUNIT, MT_TFOG);
+		}
+		else
+		{
+		    // kill momentum:
+		    thing->momx = thing->momy = thing->momz = 0;
+
+		    // spawn teleport fog at source and destination
+		    fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
+		    S_StartSound (fog, sfx_telept);
+		    an = m->angle >> ANGLETOFINESHIFT;
+		    fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
+				   , thing->z, MT_TFOG);
+
+		}
+
+		// emit sound, where?
+		S_StartSound (fog, sfx_telept);
+
 		return 1;
 	    }	
 	}
