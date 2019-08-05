@@ -83,6 +83,7 @@ line_t*		ceilingline;
 // but don't process them until the move is proven valid
 
 line_t*		spechit[MAXSPECIALCROSS];
+int		spechitside[MAXSPECIALCROSS];
 int		numspechit;
 
 
@@ -212,13 +213,15 @@ static void SpechitOverrun(line_t *ld);
 //
 boolean PIT_CheckLine (line_t* ld)
 {
+    int side;
     if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
 	|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
 	|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
 	|| tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
 	return true;
 
-    if (P_BoxOnLineSide (tmbbox, ld) != -1)
+    side = P_BoxOnLineSide (tmbbox, ld);
+    if (side != -1)
 	return true;
 		
     // A line has been hit
@@ -264,6 +267,7 @@ boolean PIT_CheckLine (line_t* ld)
     if (ld->special)
     {
         spechit[numspechit] = ld;
+        spechitside[numspechit] = side;
 	numspechit++;
 
         // fraggle: spechits overrun emulation code from prboom-plus
@@ -625,7 +629,10 @@ P_TryMove
 	{
 	    // see if the line was crossed
 	    ld = spechit[numspechit];
-	    side = P_PointOnLineSide (thing->x, thing->y, ld);
+	    side = spechitside[numspechit];
+	    // NOTE(jsd): this check does not account for thing->radius and so will
+	    // fail for things with radii traveling "too fast" while crossing special lines.
+	    //side = P_PointOnLineSide (thing->x, thing->y, ld);
 	    oldside = P_PointOnLineSide (oldx, oldy, ld);
 	    if (side != oldside)
 	    {
