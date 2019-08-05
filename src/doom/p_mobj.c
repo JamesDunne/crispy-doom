@@ -195,7 +195,8 @@ void P_XYMovement (mobj_t* mo)
 	
     do
     {
-	if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2)
+	if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2 ||
+	    xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)
 	{
 	    ptryx = mo->x + xmove/2;
 	    ptryy = mo->y + ymove/2;
@@ -226,11 +227,11 @@ void P_XYMovement (mobj_t* mo)
 		{
 		    if (mo->z > ceilingline->backsector->ceilingheight)
 		    {
-		    // Hack to prevent missiles exploding
-		    // against the sky.
-		    // Does not handle sky floors.
-		    P_RemoveMobj (mo);
-		    return;
+			// Hack to prevent missiles exploding
+			// against the sky.
+			// Does not handle sky floors.
+			P_RemoveMobj (mo);
+			return;
 		    }
 		    else
 		    {
