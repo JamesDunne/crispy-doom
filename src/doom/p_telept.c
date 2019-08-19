@@ -34,23 +34,43 @@
 // State.
 #include "r_state.h"
 
-static int pt_r;
+static int pt_r0;
+static int pt_r1;
 static int pt_q;
 
 static int pt_PickBit(void)
 {
     if (pt_q == 0)
     {
-        pt_r = P_Random();
+        pt_r0 = P_Random();
+	pt_r1 = P_Random();
         pt_q++;
     }
-    else
+    else if (pt_q == 1)
     {
-        pt_r >>= 5;
-        pt_q = 0;
+        pt_r0 >>= 5;
+        pt_r0 |= (pt_r1 & 0x1F) << 3;
+        pt_r1 >>= 5;
+        pt_q++;
+    }
+    else if (pt_q == 2)
+    {
+	pt_r0 >>= 5;
+	pt_r1 = P_Random();
+	pt_r0 |= (pt_r1 & 0x03) << 6;
+	pt_r1 >>= 2;
+	pt_q++;
+    }
+    else if (pt_q == 3)
+    {
+	pt_r0 >>= 5;
+	pt_r0 |= (pt_r1 & 0x7F) << 1;
+	pt_r1 >>= 7;
+	pt_q = 0;
+	// forget that last bit.
     }
 
-    return pt_r & 31;
+    return pt_r0 & 31;
 }
 
 
@@ -151,7 +171,7 @@ EV_Teleport
 
 		for (j = 1; j < 32; j++)
 		{
-		    for (q = 0; q < 8; q++)
+		    for (q = 0; q < 32; q++)
 		    {
 			uint32_t t = thing->telefizz[j - 1][q];
 			int k = pt_PickBit();

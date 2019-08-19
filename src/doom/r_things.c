@@ -548,7 +548,7 @@ R_DrawVisSprite
 	column = (column_t *) ((byte *)patch +
 			       LONG(patch->columnofs[texturecolumn]));
 	if (vis->telefizztime > 0)
-	    dc_fizzmask = vis->telefizz[texturecolumn & 7];
+	    dc_fizzmask = vis->telefizz[texturecolumn & 31];
 	R_DrawMaskedColumn (column);
     }
 

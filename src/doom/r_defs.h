@@ -420,7 +420,7 @@ typedef struct vissprite_s
 
     // [JSD] count-down timer after teleportation for fizz effect (start at 32 down to 0)
     int			telefizztime;
-    uint32_t		telefizz[8];
+    uint32_t		telefizz[32];
 } vissprite_t;
 
 
