@@ -249,7 +249,7 @@ R_RenderMaskedSegRange
 			
     if (fixedcolormap)
 	dc_colormap[0] = dc_colormap[1] = fixedcolormap;
-    
+
     // draw the columns
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {

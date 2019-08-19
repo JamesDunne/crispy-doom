@@ -293,6 +293,9 @@ typedef struct mobj_s
     fixed_t		oldz;
     angle_t		oldangle;
 
+    // [JSD] count-down timer after teleportation for fizz effect (start at 32 down to 0)
+    int			telefizztime;
+    uint32_t		telefizz[32];
 } mobj_t;
 
 

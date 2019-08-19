@@ -25,6 +25,7 @@
 #include "s_sound.h"
 
 #include "p_local.h"
+#include "m_random.h"
 
 
 // Data.
@@ -44,7 +45,7 @@ EV_Teleport
   int		side,
   mobj_t*	thing )
 {
-    int		i;
+    int		i, j, q;
     int		tag;
     mobj_t*	m;
     mobj_t*	fog;
@@ -121,6 +122,22 @@ EV_Teleport
 		// don't move for a bit
 		if (thing->player)
 		    thing->reactiontime = 18;	
+
+		// [JSD] enable fizz effect:
+		thing->telefizztime = 32;
+		// [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
+		thing->telefizz[0] = 0;
+		for (j = 1; j < 32; j++) {
+		    uint32_t t = thing->telefizz[j-1];
+		    int k = P_Random() & 31;
+		    q = 0;
+		    while ((t & (1<<k)) == 0) {
+			k = P_Random() & 31;
+			if (q++ >= 5) break;
+		    }
+		    t |= (1<<k);
+		    thing->telefizz[j] = t;
+		}
 
 		thing->angle = m->angle;
 		if (thing->flags & MF_MISSILE)

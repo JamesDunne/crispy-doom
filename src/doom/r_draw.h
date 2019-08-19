@@ -31,6 +31,8 @@ extern fixed_t		dc_iscale;
 extern fixed_t		dc_texturemid;
 extern int		dc_texheight;
 extern byte*		dc_brightmap;
+extern uint32_t		dc_fizzmask;
+extern uint32_t		dc_fmask;
 
 // first pixel in a column
 extern byte*		dc_source;		
@@ -41,6 +43,9 @@ extern byte*		dc_source;
 //  here.
 void 	R_DrawColumn (void);
 void 	R_DrawColumnLow (void);
+
+// [JSD]
+void 	R_DrawFizzColumn (void);
 
 // The Spectre/Invisibility effect.
 void 	R_DrawFuzzColumn (void);
