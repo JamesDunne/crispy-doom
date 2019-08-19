@@ -532,6 +532,12 @@ void P_MobjThinker (mobj_t* mobj)
     {
 	return MusInfoThinker(mobj);
     }
+
+    // [JSD]
+    if (mobj->telefizztime > 0) {
+    	mobj->telefizztime--;
+    }
+
     // [crispy] suppress interpolation of player missiles for the first tic
     if (mobj->interp == -1)
     {

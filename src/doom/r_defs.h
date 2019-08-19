@@ -417,7 +417,10 @@ typedef struct vissprite_s
 #ifdef CRISPY_TRUECOLOR
     const pixel_t	(*blendfunc)(const pixel_t fg, const pixel_t bg);
 #endif
-    
+
+    // [JSD] count-down timer after teleportation for fizz effect (start at 32 down to 0)
+    int			telefizztime;
+    uint32_t		telefizz[32];
 } vissprite_t;
 
 

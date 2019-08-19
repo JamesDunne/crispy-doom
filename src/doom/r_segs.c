@@ -249,7 +249,7 @@ R_RenderMaskedSegRange
 			
     if (fixedcolormap)
 	dc_colormap[0] = dc_colormap[1] = fixedcolormap;
-    
+
     // draw the columns
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {
@@ -410,6 +410,7 @@ void R_RenderSegLoop (void)
 	    dc_source = R_GetColumn(midtexture,texturecolumn,true);
 	    dc_texheight = textureheight[midtexture]>>FRACBITS; // [crispy] Tutti-Frutti fix
 	    dc_brightmap = texturebrightmap[midtexture];
+	    dc_fmask = 1;
 	    colfunc ();
 	    ceilingclip[rw_x] = viewheight;
 	    floorclip[rw_x] = -1;
@@ -434,6 +435,7 @@ void R_RenderSegLoop (void)
 		    dc_source = R_GetColumn(toptexture,texturecolumn,true);
 		    dc_texheight = textureheight[toptexture]>>FRACBITS; // [crispy] Tutti-Frutti fix
 		    dc_brightmap = texturebrightmap[toptexture];
+		    dc_fmask = 1;
 		    colfunc ();
 		    ceilingclip[rw_x] = mid;
 		}
@@ -466,6 +468,7 @@ void R_RenderSegLoop (void)
 					    texturecolumn,true);
 		    dc_texheight = textureheight[bottomtexture]>>FRACBITS; // [crispy] Tutti-Frutti fix
 		    dc_brightmap = texturebrightmap[bottomtexture];
+		    dc_fmask = 1;
 		    colfunc ();
 		    floorclip[rw_x] = mid;
 		}

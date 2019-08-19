@@ -818,6 +818,7 @@ void R_ExecuteSetViewSize (void)
     centeryfrac = centery<<FRACBITS;
     projection = centerxfrac;
 
+    dc_fizzmask = 0xFFFFFFFFUL;
     if (!detailshift)
     {
 	colfunc = basecolfunc = R_DrawColumn;

@@ -293,6 +293,12 @@ typedef struct mobj_s
     fixed_t		oldz;
     angle_t		oldangle;
 
+    // [JSD] count-down timer after teleportation for fizzle effect (start at 32 down to 0)
+    // negative values (-32 to -1) indicates fizzle out
+    // positive values (1 to 32) indicate fizzle in
+    // zero value means no fizzle
+    int			telefizztime;
+    uint32_t		telefizz[32][32];
 } mobj_t;
 
 

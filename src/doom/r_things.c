@@ -447,11 +447,12 @@ void R_DrawMaskedColumn (column_t* column)
 	{
 	    dc_source = (byte *)column + 3;
 	    dc_texturemid = basetexturemid - (top<<FRACBITS);
+	    dc_fmask = 1 << (top & 31);
 	    // dc_source = (byte *)column + 3 - top;
 
 	    // Drawn by either R_DrawColumn
 	    //  or (SHADOW) R_DrawFuzzColumn.
-	    colfunc ();	
+	    colfunc ();
 	}
 	column = (column_t *)(  (byte *)column + column->length + 4);
     }
@@ -472,7 +473,7 @@ R_DrawVisSprite
   int			x2 )
 {
     column_t*		column;
-    int			texturecolumn;
+    int			texturecolumn, oldtexturecolumn;
     fixed_t		frac;
     patch_t*		patch;
 	
@@ -514,13 +515,14 @@ R_DrawVisSprite
 	blendfunc = vis->blendfunc;
 #endif
     }
-	
+
     dc_iscale = abs(vis->xiscale)>>detailshift;
     dc_texturemid = vis->texturemid;
     frac = vis->startfrac;
+    oldtexturecolumn = 0;
     spryscale = vis->scale;
     sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
-	
+
     for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
 	static boolean error = false;
@@ -539,10 +541,15 @@ R_DrawVisSprite
 #endif
 	column = (column_t *) ((byte *)patch +
 			       LONG(patch->columnofs[texturecolumn]));
+	if (vis->telefizztime)
+	    dc_fizzmask = vis->telefizz[texturecolumn & 31];
+	else
+	    dc_fizzmask = 0xFFFFFFFFUL;
 	R_DrawMaskedColumn (column);
     }
 
     colfunc = basecolfunc;
+    dc_fizzmask = 0xFFFFFFFFUL;
 #ifdef CRISPY_TRUECOLOR
     blendfunc = I_BlendOver;
 #endif
@@ -713,6 +720,12 @@ void R_ProjectSprite (mobj_t* thing)
     vis = R_NewVisSprite ();
     vis->translation = NULL; // [crispy] no color translation
     vis->mobjflags = thing->flags;
+    vis->telefizztime = thing->telefizztime; // [JSD]
+    if (vis->telefizztime > 0) {
+	memcpy(vis->telefizz, thing->telefizz[32 - thing->telefizztime], sizeof(vis->telefizz));
+    } else if (vis->telefizztime < 0) {
+	memcpy(vis->telefizz, thing->telefizz[-1 - thing->telefizztime], sizeof(vis->telefizz));
+    }
     vis->scale = xscale<<detailshift;
     vis->gx = interpx;
     vis->gy = interpy;
@@ -749,7 +762,7 @@ void R_ProjectSprite (mobj_t* thing)
 	// fixed map
 	vis->colormap[0] = vis->colormap[1] = fixedcolormap;
     }
-    else if (thing->frame & FF_FULLBRIGHT)
+    else if (thing->frame & FF_FULLBRIGHT || vis->telefizztime != 0)	// [JSD] when telefizztime, be full bright
     {
 	// full bright
 	vis->colormap[0] = vis->colormap[1] = colormaps;
@@ -895,6 +908,7 @@ static void R_DrawLSprite (void)
     vis->colormap[0] = vis->colormap[1] = fixedcolormap ? fixedcolormap : colormaps; // [crispy] always full brightness
     vis->brightmap = dc_brightmap;
     vis->translation = R_LaserspotColor();
+    vis->telefizztime = 0; // [JSD]
 #ifdef CRISPY_TRUECOLOR
     vis->mobjflags |= MF_TRANSLUCENT;
     vis->blendfunc = I_BlendAdd;
@@ -1062,6 +1076,7 @@ void R_DrawPSprite (pspdef_t* psp, psprnum_t psprnum) // [crispy] differentiate 
     // store information in a vissprite
     vis = &avis;
     vis->translation = NULL; // [crispy] no color translation
+    vis->telefizztime = 0; // [JSD]
     vis->mobjflags = 0;
     // [crispy] weapons drawn 1 pixel too high when player is idle
     vis->texturemid = (BASEYCENTER<<FRACBITS)+FRACUNIT/4-(psp_sy-spritetopoffset[lump]);
