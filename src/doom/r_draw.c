@@ -193,6 +193,7 @@ void R_DrawFizzColumn (void)
     fixed_t		fracstep;
     int			heightmask = dc_texheight - 1;
     uint32_t		fmask;
+    int			texy, oldtexy;
 
     count = dc_yh - dc_yl;
 
@@ -216,6 +217,8 @@ void R_DrawFizzColumn (void)
     //  which is the only mapping to be done.
     fracstep = dc_iscale;
     frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
@@ -236,13 +239,18 @@ void R_DrawFizzColumn (void)
     do
     {
 	// [crispy] brightmaps
-	const byte source = dc_source[frac>>FRACBITS];
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
+	const byte source = dc_source[texy];
 	if (dc_fizzmask & dc_fmask) {
 	    *dest = dc_colormap[dc_brightmap[source]][source];
 	}
 
-	dc_fmask <<= 1;
-	if (dc_fmask == 0) dc_fmask = 1;
 	dest += SCREENWIDTH;
 	if ((frac += fracstep) >= heightmask)
 	    frac -= heightmask;
@@ -255,16 +263,20 @@ void R_DrawFizzColumn (void)
 	// Re-map color indices from wall texture column
 	//  using a lighting/special effects LUT.
 	// [crispy] brightmaps
-	const byte source = dc_source[(frac>>FRACBITS)&heightmask];
+	const int texy = (frac>>FRACBITS)&heightmask;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
+	const byte source = dc_source[texy];
 	if (dc_fizzmask & dc_fmask) {
 	    *dest = dc_colormap[dc_brightmap[source]][source];
 	}
 
-	dc_fmask <<= 1;
-	if (dc_fmask == 0) dc_fmask = 1;
 	dest += SCREENWIDTH;
 	frac += fracstep;
-
     } while (count--);
   }
 }

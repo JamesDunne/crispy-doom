@@ -45,7 +45,7 @@ EV_Teleport
   int		side,
   mobj_t*	thing )
 {
-    int		i, j, q;
+    int		i, j, q, r, n;
     int		tag;
     mobj_t*	m;
     mobj_t*	fog;
@@ -127,14 +127,35 @@ EV_Teleport
 		thing->telefizztime = 32;
 		// [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
 		thing->telefizz[0] = 0;
+		r = P_Random();
+		q = 0;
 		for (j = 1; j < 32; j++) {
 		    uint32_t t = thing->telefizz[j-1];
-		    int k = P_Random() & 31;
-		    q = 0;
-		    while ((t & (1<<k)) == 0) {
-			k = P_Random() & 31;
-			if (q++ >= 5) break;
+		    int k;
+
+		    k = r & 31;
+		    if (q < 5) {
+		    	r >>= 5;
+		    	q++;
+		    } else {
+		    	r = P_Random();
+		    	q = 0;
 		    }
+
+		    n = 0;
+		    while (n++ < 10) {
+		    	if ((t & (1<<k)) == 0) break;
+
+			k = r & 31;
+			if (q < 5) {
+			    r >>= 5;
+			    q++;
+			} else {
+			    r = P_Random();
+			    q = 0;
+			}
+		    }
+
 		    t |= (1<<k);
 		    thing->telefizz[j] = t;
 		}
