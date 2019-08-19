@@ -34,6 +34,24 @@
 // State.
 #include "r_state.h"
 
+static int pt_r;
+static int pt_q;
+
+static int pt_PickBit(void)
+{
+    if (pt_q == 0)
+    {
+        pt_r = P_Random();
+        pt_q++;
+    }
+    else
+    {
+        pt_r >>= 5;
+        pt_q = 0;
+    }
+
+    return pt_r & 31;
+}
 
 
 //
@@ -45,7 +63,7 @@ EV_Teleport
   int		side,
   mobj_t*	thing )
 {
-    int		i, j, q, r, n;
+    int		i, j, q, n;
     int		tag;
     mobj_t*	m;
     mobj_t*	fog;
@@ -126,38 +144,29 @@ EV_Teleport
 		// [JSD] enable fizz effect:
 		thing->telefizztime = 32;
 		// [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
-		thing->telefizz[0] = 0;
-		r = P_Random();
-		q = 0;
-		for (j = 1; j < 32; j++) {
-		    uint32_t t = thing->telefizz[j-1];
-		    int k;
+		for (q = 0; q < 8; q++)
+		{
+		    thing->telefizz[0][q] = (1 << pt_PickBit());
+		}
 
-		    k = r & 31;
-		    if (q < 5) {
-		    	r >>= 5;
-		    	q++;
-		    } else {
-		    	r = P_Random();
-		    	q = 0;
-		    }
+		for (j = 1; j < 32; j++)
+		{
+		    for (q = 0; q < 8; q++)
+		    {
+			uint32_t t = thing->telefizz[j - 1][q];
+			int k = pt_PickBit();
 
-		    n = 0;
-		    while (n++ < 10) {
-		    	if ((t & (1<<k)) == 0) break;
+			n = 0;
+			while (n++ < 10)
+			{
+			    if ((t & (1 << k)) == 0) break;
 
-			k = r & 31;
-			if (q < 5) {
-			    r >>= 5;
-			    q++;
-			} else {
-			    r = P_Random();
-			    q = 0;
+			    k = pt_PickBit();
 			}
-		    }
 
-		    t |= (1<<k);
-		    thing->telefizz[j] = t;
+			t |= (1 << k);
+			thing->telefizz[j][q] = t;
+		    }
 		}
 
 		thing->angle = m->angle;

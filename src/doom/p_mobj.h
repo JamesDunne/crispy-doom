@@ -295,7 +295,7 @@ typedef struct mobj_s
 
     // [JSD] count-down timer after teleportation for fizz effect (start at 32 down to 0)
     int			telefizztime;
-    uint32_t		telefizz[32];
+    uint32_t		telefizz[32][8];
 } mobj_t;
 
 

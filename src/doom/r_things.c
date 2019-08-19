@@ -529,13 +529,6 @@ R_DrawVisSprite
     spryscale = vis->scale;
     sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
 
-    // [JSD]
-    if (vis->telefizztime > 0) {
-    	dc_fizzmask = vis->telefizz;
-    } else {
-    	dc_fizzmask = 0xFFFFFFFFUL;
-    }
-
     for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
 	static boolean error = false;
@@ -555,11 +548,7 @@ R_DrawVisSprite
 	column = (column_t *) ((byte *)patch +
 			       LONG(patch->columnofs[texturecolumn]));
 	if (vis->telefizztime > 0)
-	    while (oldtexturecolumn < texturecolumn) {
-	    	// rotate fizzmask 5 bytes right:
-		dc_fizzmask = (dc_fizzmask >> 5) | ((dc_fizzmask & 0x1FUL) << (32UL-5UL));
-		oldtexturecolumn++;
-	    }
+	    dc_fizzmask = vis->telefizz[texturecolumn & 7];
 	R_DrawMaskedColumn (column);
     }
 
@@ -736,9 +725,7 @@ void R_ProjectSprite (mobj_t* thing)
     vis->mobjflags = thing->flags;
     vis->telefizztime = thing->telefizztime; // [JSD]
     if (vis->telefizztime > 0) {
-	vis->telefizz = thing->telefizz[32 - thing->telefizztime];
-    } else {
-    	vis->telefizz = 0xFFFFFFFFUL;
+        memcpy(vis->telefizz, thing->telefizz[32 - thing->telefizztime], sizeof(vis->telefizz));
     }
     vis->scale = xscale<<detailshift;
     vis->gx = interpx;
