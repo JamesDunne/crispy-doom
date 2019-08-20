@@ -280,6 +280,104 @@ void R_DrawFizzColumn (void)
   }
 }
 
+void R_DrawFizzColumnLow (void)
+{
+    int			count;
+    pixel_t*		dest;
+    pixel_t*		dest2;
+    fixed_t		frac;
+    fixed_t		fracstep;
+    int                 x;
+    int			heightmask = dc_texheight - 1;
+    int			texy, oldtexy;
+
+    count = dc_yh - dc_yl;
+
+    // Zero length.
+    if (count < 0)
+	return;
+
+#ifdef RANGECHECK
+    if ((unsigned)dc_x >= SCREENWIDTH
+	|| dc_yl < 0
+	|| dc_yh >= SCREENHEIGHT)
+    {
+
+	I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+    }
+    //	dccount++;
+#endif
+    // Blocky mode, need to multiply by 2.
+    x = dc_x << 1;
+
+    dest = ylookup[dc_yl] + columnofs[x];
+    dest2 = ylookup[dc_yl] + columnofs[x+1];
+
+    fracstep = dc_iscale;
+    frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
+
+    // heightmask is the Tutti-Frutti fix -- killough
+    if (dc_texheight & heightmask) // not a power of 2 -- killough
+    {
+	heightmask++;
+	heightmask <<= FRACBITS;
+
+	if (frac < 0)
+	    while ((frac += heightmask) < 0);
+	else
+	    while (frac >= heightmask)
+		frac -= heightmask;
+
+	do
+	{
+	    // [crispy] brightmaps
+	    const int texy = frac>>FRACBITS;
+	    while (oldtexy < texy) {
+		dc_fmask <<= 1;
+		if (dc_fmask == 0) dc_fmask = 1;
+		oldtexy++;
+	    }
+
+	    const byte source = dc_source[texy];
+	    if (dc_fizzmask & dc_fmask) {
+		*dest2 = *dest = dc_colormap[dc_brightmap[source]][source];
+	    }
+
+	    dest += SCREENWIDTH;
+	    dest2 += SCREENWIDTH;
+
+	    if ((frac += fracstep) >= heightmask)
+		frac -= heightmask;
+	} while (count--);
+    }
+    else // texture height is a power of 2 -- killough
+    {
+	do
+	{
+	    // Hack. Does not work corretly.
+	    // [crispy] brightmaps
+	    const int texy = (frac>>FRACBITS)&heightmask;
+	    while (oldtexy < texy) {
+		dc_fmask <<= 1;
+		if (dc_fmask == 0) dc_fmask = 1;
+		oldtexy++;
+	    }
+
+	    const byte source = dc_source[texy];
+	    if (dc_fizzmask & dc_fmask) {
+		*dest2 = *dest = dc_colormap[dc_brightmap[source]][source];
+	    }
+
+	    dest += SCREENWIDTH;
+	    dest2 += SCREENWIDTH;
+
+	    frac += fracstep;
+	} while (count--);
+    }
+}
+
 
 
 // UNUSED.

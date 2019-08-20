@@ -121,6 +121,7 @@ int LIGHTZSHIFT;
 void (*colfunc) (void);
 void (*basecolfunc) (void);
 void (*fuzzcolfunc) (void);
+void (*fizzcolfunc) (void);
 void (*transcolfunc) (void);
 void (*tlcolfunc) (void);
 void (*spanfunc) (void);
@@ -822,6 +823,7 @@ void R_ExecuteSetViewSize (void)
     {
 	colfunc = basecolfunc = R_DrawColumn;
 	fuzzcolfunc = R_DrawFuzzColumn;
+	fizzcolfunc = R_DrawFizzColumn;
 	transcolfunc = R_DrawTranslatedColumn;
 	tlcolfunc = R_DrawTLColumn;
 	spanfunc = R_DrawSpan;
@@ -830,6 +832,7 @@ void R_ExecuteSetViewSize (void)
     {
 	colfunc = basecolfunc = R_DrawColumnLow;
 	fuzzcolfunc = R_DrawFuzzColumnLow;
+	fizzcolfunc = R_DrawFizzColumnLow;
 	transcolfunc = R_DrawTranslatedColumnLow;
 	tlcolfunc = R_DrawTLColumnLow;
 	spanfunc = R_DrawSpanLow;

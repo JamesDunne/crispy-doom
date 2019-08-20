@@ -46,6 +46,7 @@ void 	R_DrawColumnLow (void);
 
 // [JSD]
 void 	R_DrawFizzColumn (void);
+void 	R_DrawFizzColumnLow (void);
 
 // The Spectre/Invisibility effect.
 void 	R_DrawFuzzColumn (void);

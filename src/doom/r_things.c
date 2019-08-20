@@ -518,8 +518,8 @@ R_DrawVisSprite
     }
     else if (vis->telefizztime != 0)
     {
-    	// [JSD] TODO: _Low variant
-    	colfunc = R_DrawFizzColumn;
+	// [JSD]
+	colfunc = fizzcolfunc;
     }
 
     dc_iscale = abs(vis->xiscale)>>detailshift;
