@@ -100,18 +100,25 @@ void P_TFogOutThinker(mobj_t *mobj)
 	mobj->telefizztime++;
     }
 
-#if 0
     // adjust visual properties to match target:
+#if 0
     mobj->angle = (target->angle - mobj->tracer->angle) + target->oldangle;
+#endif
     mobj->sprite = target->sprite;
     mobj->frame = target->frame;
-#endif
 
     // disabled: causes bugs where monsters can appear to move through walls
 #if 0
     // move object relative to where teleported object moved from teleport destination:
     mobj->x = mobj->oldx + (target->x - mobj->tracer->x);
     mobj->y = mobj->oldy + (target->y - mobj->tracer->y);
+#else
+    if (target->momx || target->momy) {
+	P_XYMovement(mobj);
+    }
+    if (target->momz) {
+	P_ZMovement(mobj);
+    }
 #endif
 
     if (mobj->tics > 0)
@@ -160,6 +167,7 @@ EV_Teleport
     angle_t oldangle;
     fixed_t	oldmomx;
     fixed_t	oldmomy;
+    fixed_t	oldmomz;
 
     // don't teleport missiles
     //if (thing->flags & MF_MISSILE)
@@ -202,6 +210,7 @@ EV_Teleport
 		oldangle = thing->angle;
 		oldmomx = thing->momx;
 		oldmomy = thing->momy;
+		oldmomz = thing->momz;
 
 		if (!P_TeleportMove (thing, m->x, m->y))
 		    return 0;
@@ -242,7 +251,7 @@ EV_Teleport
 		    thing->momx = FixedMul(oldmomx, c) - FixedMul(oldmomy, s);
 		    thing->momy = FixedMul(oldmomy, c) + FixedMul(oldmomx, s);
 		    // kill Z momentum so missiles don't fly upwards or downwards out of teleporter:
-		    thing->momz = 0;
+		    //thing->momz = 0;
 		    // spawn teleport fog up off the floor:
 		    zoffs = -4*8*FRACUNIT;
 		}
@@ -262,7 +271,11 @@ EV_Teleport
 		fog->oldangle = oldangle;
 		fog->sprite = thing->sprite;
 		fog->frame = thing->frame;
-		fog->flags &= ~MF_TRANSLUCENT;
+		fog->flags = MF_NOCLIP | MF_NOBLOCKMAP | MF_NOGRAVITY;
+		// copy in momentum:
+		fog->momx = oldmomx;
+		fog->momy = oldmomy;
+		fog->momz = oldmomz;
 		// enough tics to let sound play out
 		fog->tics = 64;
 		// fizzle out effect using same fizzle pattern as object that is teleporting
