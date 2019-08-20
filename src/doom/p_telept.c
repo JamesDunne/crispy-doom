@@ -48,19 +48,6 @@ static int pt_PickBit(void)
     return b;
 }
 
-// [JSD]
-void P_TfogThinker(mobj_t *mobj)
-{
-    if (mobj->telefizztime < 0)
-    {
-	mobj->telefizztime++;
-    }
-
-    if (!mobj->telefizztime)
-	if (!P_SetMobjState (mobj, S_NULL))
-	    return;		// freed itself
-}
-
 static void P_EnableFizz(mobj_t *thing)
 {
     uint32_t j, q, n;
@@ -103,6 +90,33 @@ static void P_EnableFizz(mobj_t *thing)
     }
 }
 
+// [JSD] think function for MT_TFOG to mimic visuals of object that was teleported
+void P_TfogThinker(mobj_t *mobj)
+{
+    mobj_t *target = mobj->target;
+
+    if (mobj->telefizztime < 0)
+    {
+	mobj->telefizztime++;
+    }
+
+    // adjust visual properties to match target:
+    mobj->angle = target->angle;
+    mobj->sprite = target->sprite;
+    mobj->frame = target->frame;
+
+    // disabled: causes bugs where monsters can appear to move through walls
+#if 0
+    // move object relative to where teleported object moved from teleport destination:
+    mobj->x = mobj->oldx + (target->x - mobj->tracer->x);
+    mobj->y = mobj->oldy + (target->y - mobj->tracer->y);
+#endif
+
+    if (!mobj->telefizztime)
+	if (!P_SetMobjState (mobj, S_NULL))
+	    return;		// freed itself
+}
+
 //
 // TELEPORTATION
 //
@@ -112,7 +126,7 @@ EV_Teleport
   int		side,
   mobj_t*	thing )
 {
-    int		i, j, q, n;
+    int		i;
     int		tag;
     mobj_t*	m;
     mobj_t*	fog;
@@ -222,6 +236,8 @@ EV_Teleport
 		// spawn teleport fog at source and destination
 		fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
 		// customize fog object to be a visual clone of object that is teleporting
+		fog->target = thing;
+		fog->tracer = m; // record teleport target mobj
 		fog->angle = oldangle;
 		fog->sprite = thing->sprite;
 		fog->frame = thing->frame;
