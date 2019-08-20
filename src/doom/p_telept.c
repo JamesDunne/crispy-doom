@@ -34,45 +34,16 @@
 // State.
 #include "r_state.h"
 
-static int pt_r0;
-static int pt_r1;
-static int pt_q;
-
 static int pt_PickBit(void)
 {
-    if (pt_q == 0)
-    {
-        pt_r0 = P_Random();
-	pt_r1 = P_Random();
-        pt_q++;
-    }
-    else if (pt_q == 1)
-    {
-        pt_r0 >>= 5;
-        pt_r0 |= (pt_r1 & 0x1F) << 3;
-        pt_r1 >>= 5;
-        pt_q++;
-    }
-    else if (pt_q == 2)
-    {
-	pt_r0 >>= 5;
-	pt_r1 = P_Random();
-	pt_r0 |= (pt_r1 & 0x03) << 6;
-	pt_r1 >>= 2;
-	pt_q++;
-    }
-    else if (pt_q == 3)
-    {
-	pt_r0 >>= 5;
-	pt_r0 |= (pt_r1 & 0x7F) << 1;
-	pt_r1 >>= 7;
-	pt_q = 0;
-	// forget that last bit.
-    }
-
-    return pt_r0 & 31;
+    int b = 0;
+    b |= (M_Random() >= 0x81) ? 1<<0 : 0;
+    b |= (M_Random() >= 0x81) ? 1<<1 : 0;
+    b |= (M_Random() >= 0x81) ? 1<<2 : 0;
+    b |= (M_Random() >= 0x81) ? 1<<3 : 0;
+    b |= (M_Random() >= 0x81) ? 1<<4 : 0;
+    return b;
 }
-
 
 //
 // TELEPORTATION
@@ -164,7 +135,7 @@ EV_Teleport
 		// [JSD] enable fizz effect:
 		thing->telefizztime = 32;
 		// [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
-		for (q = 0; q < 8; q++)
+		for (q = 0; q < 32; q++)
 		{
 		    thing->telefizz[0][q] = (1 << pt_PickBit());
 		}
@@ -174,14 +145,25 @@ EV_Teleport
 		    for (q = 0; q < 32; q++)
 		    {
 			uint32_t t = thing->telefizz[j - 1][q];
-			int k = pt_PickBit();
+			uint32_t k;
+
+			k = pt_PickBit();
 
 			n = 0;
-			while (n++ < 10)
+			while (++n <= 17)
 			{
 			    if ((t & (1 << k)) == 0) break;
 
 			    k = pt_PickBit();
+			}
+
+			if (t & (1<<k))
+			{
+			    // find a clear bit:
+			    for (k=0,n=1;k<32;k++,n<<=1)
+			    {
+				if ((t & n) == 0) break;
+			    }
 			}
 
 			t |= (1 << k);
