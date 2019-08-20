@@ -115,6 +115,7 @@ void R_DrawColumn (void)
     fixed_t		frac;
     fixed_t		fracstep;	 
     int			heightmask = dc_texheight - 1;
+    int			texy, oldtexy;
 
     count = dc_yh - dc_yl; 
 
@@ -137,7 +138,9 @@ void R_DrawColumn (void)
     // Determine scaling,
     //  which is the only mapping to be done.
     fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+    frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
@@ -157,9 +160,18 @@ void R_DrawColumn (void)
 
     do
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// [crispy] brightmaps
-	const byte source = dc_source[frac>>FRACBITS];
-	*dest = dc_colormap[dc_brightmap[source]][source];
+	const byte source = dc_source[texy];
+	if (dc_fizzmask & dc_fmask) {
+	    *dest = dc_colormap[dc_brightmap[source]][source];
+	}
 
 	dest += SCREENWIDTH;
 	if ((frac += fracstep) >= heightmask)
@@ -170,11 +182,20 @@ void R_DrawColumn (void)
   {
     do 
     {
+	const int texy = (frac>>FRACBITS)&heightmask;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// Re-map color indices from wall texture column
 	//  using a lighting/special effects LUT.
 	// [crispy] brightmaps
-	const byte source = dc_source[(frac>>FRACBITS)&heightmask];
-	*dest = dc_colormap[dc_brightmap[source]][source];
+	const byte source = dc_source[texy];
+	if (dc_fizzmask & dc_fmask) {
+	    *dest = dc_colormap[dc_brightmap[source]][source];
+	}
 
 	dest += SCREENWIDTH;
 	frac += fracstep;
@@ -448,7 +469,8 @@ void R_DrawColumnLow (void)
     fixed_t		fracstep;	 
     int                 x;
     int			heightmask = dc_texheight - 1;
- 
+    int			texy, oldtexy;
+
     count = dc_yh - dc_yl; 
 
     // Zero length.
@@ -473,7 +495,9 @@ void R_DrawColumnLow (void)
     
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep;
-    
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
+
   // heightmask is the Tutti-Frutti fix -- killough
   if (dc_texheight & heightmask) // not a power of 2 -- killough
   {
@@ -489,8 +513,17 @@ void R_DrawColumnLow (void)
     do
     {
 	// [crispy] brightmaps
-	const byte source = dc_source[frac>>FRACBITS];
-	*dest2 = *dest = dc_colormap[dc_brightmap[source]][source];
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
+	const byte source = dc_source[texy];
+	if (dc_fizzmask & dc_fmask) {
+	    *dest2 = *dest = dc_colormap[dc_brightmap[source]][source];
+	}
 
 	dest += SCREENWIDTH;
 	dest2 += SCREENWIDTH;
@@ -503,10 +536,19 @@ void R_DrawColumnLow (void)
   {
     do 
     {
+	const int texy = (frac>>FRACBITS)&heightmask;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// Hack. Does not work corretly.
 	// [crispy] brightmaps
-	const byte source = dc_source[(frac>>FRACBITS)&heightmask];
-	*dest2 = *dest = dc_colormap[dc_brightmap[source]][source];
+	const byte source = dc_source[texy];
+	if (dc_fizzmask & dc_fmask) {
+	    *dest2 = *dest = dc_colormap[dc_brightmap[source]][source];
+	}
 	dest += SCREENWIDTH;
 	dest2 += SCREENWIDTH;
 
@@ -563,6 +605,7 @@ void R_DrawFuzzColumn (void)
     fixed_t		frac;
     fixed_t		fracstep;	 
     boolean		cutoff = false;
+    int			texy, oldtexy;
 
     // Adjust borders. Low... 
     if (!dc_yl) 
@@ -594,22 +637,33 @@ void R_DrawFuzzColumn (void)
 
     // Looks familiar.
     fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+    frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     // Looks like an attempt at dithering,
     //  using the colormap #6 (of 0-31, a bit
     //  brighter than average).
     do 
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// Lookup framebuffer, and retrieve
 	//  a pixel that is either one column
 	//  left or right of the current one.
 	// Add index from colormap to index.
+	if (dc_fizzmask & dc_fmask) {
 #ifndef CRISPY_TRUECOLOR
-	*dest = colormaps[6*256+dest[SCREENWIDTH*fuzzoffset[fuzzpos]]]; 
+	    *dest = colormaps[6 * 256 + dest[SCREENWIDTH * fuzzoffset[fuzzpos]]];
 #else
-	*dest = I_BlendDark(dest[fuzzoffset[fuzzpos]], 0xc0);
+	    *dest = I_BlendDark(dest[fuzzoffset[fuzzpos]], 0xc0);
 #endif
+	}
 
 	// Clamp table lookup index.
 	if (++fuzzpos == FUZZTABLE) 
@@ -643,6 +697,7 @@ void R_DrawFuzzColumnLow (void)
     fixed_t		fracstep;	 
     int x;
     boolean		cutoff = false;
+    int			texy, oldtexy;
 
     // Adjust borders. Low... 
     if (!dc_yl) 
@@ -679,24 +734,35 @@ void R_DrawFuzzColumnLow (void)
 
     // Looks familiar.
     fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+    frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     // Looks like an attempt at dithering,
     //  using the colormap #6 (of 0-31, a bit
     //  brighter than average).
     do 
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// Lookup framebuffer, and retrieve
 	//  a pixel that is either one column
 	//  left or right of the current one.
 	// Add index from colormap to index.
+	if (dc_fizzmask & dc_fmask) {
 #ifndef CRISPY_TRUECOLOR
-	*dest = colormaps[6*256+dest[SCREENWIDTH*fuzzoffset[fuzzpos]]];
-	*dest2 = colormaps[6*256+dest2[SCREENWIDTH*fuzzoffset[fuzzpos]]];
+	    *dest = colormaps[6 * 256 + dest[SCREENWIDTH * fuzzoffset[fuzzpos]]];
+	    *dest2 = colormaps[6 * 256 + dest2[SCREENWIDTH * fuzzoffset[fuzzpos]]];
 #else
-	*dest = I_BlendDark(dest[fuzzoffset[fuzzpos]], 0xc0);
-	*dest2 = I_BlendDark(dest2[fuzzoffset[fuzzpos]], 0xc0);
+	    *dest = I_BlendDark(dest[fuzzoffset[fuzzpos]], 0xc0);
+	    *dest2 = I_BlendDark(dest2[fuzzoffset[fuzzpos]], 0xc0);
 #endif
+	}
 
 	// Clamp table lookup index.
 	if (++fuzzpos == FUZZTABLE) 
@@ -712,13 +778,22 @@ void R_DrawFuzzColumnLow (void)
     // draw one extra line using only pixels of that line and the one above
     if (cutoff)
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
+	if (dc_fizzmask & dc_fmask) {
 #ifndef CRISPY_TRUECOLOR
-	*dest = colormaps[6*256+dest[SCREENWIDTH*(fuzzoffset[fuzzpos]-FUZZOFF)/2]];
-	*dest2 = colormaps[6*256+dest2[SCREENWIDTH*(fuzzoffset[fuzzpos]-FUZZOFF)/2]];
+	    *dest = colormaps[6 * 256 + dest[SCREENWIDTH * (fuzzoffset[fuzzpos] - FUZZOFF) / 2]];
+	    *dest2 = colormaps[6 * 256 + dest2[SCREENWIDTH * (fuzzoffset[fuzzpos] - FUZZOFF) / 2]];
 #else
-	*dest = I_BlendDark(dest[(fuzzoffset[fuzzpos]-FUZZOFF)/2], 0xc0);
-	*dest2 = I_BlendDark(dest2[(fuzzoffset[fuzzpos]-FUZZOFF)/2], 0xc0);
+	    *dest = I_BlendDark(dest[(fuzzoffset[fuzzpos]-FUZZOFF)/2], 0xc0);
+	    *dest2 = I_BlendDark(dest2[(fuzzoffset[fuzzpos]-FUZZOFF)/2], 0xc0);
 #endif
+	}
     }
 } 
  
@@ -743,7 +818,8 @@ void R_DrawTranslatedColumn (void)
     int			count; 
     pixel_t*		dest;
     fixed_t		frac;
-    fixed_t		fracstep;	 
+    fixed_t		fracstep;
+    int			texy, oldtexy;
  
     count = dc_yh - dc_yl; 
     if (count < 0) 
@@ -765,17 +841,29 @@ void R_DrawTranslatedColumn (void)
 
     // Looks familiar.
     fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+    frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     // Here we do an additional index re-mapping.
     do 
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// Translation tables are used
 	//  to map certain colorramps to other ones,
 	//  used with PLAY sprites.
 	// Thus the "green" ramp of the player 0 sprite
-	//  is mapped to gray, red, black/indigo. 
-	*dest = dc_colormap[0][dc_translation[dc_source[frac>>FRACBITS]]];
+	//  is mapped to gray, red, black/indigo.
+	if (dc_fizzmask & dc_fmask) {
+	    *dest = dc_colormap[0][dc_translation[dc_source[frac >> FRACBITS]]];
+	}
+
 	dest += SCREENWIDTH;
 	
 	frac += fracstep; 
@@ -790,6 +878,7 @@ void R_DrawTranslatedColumnLow (void)
     fixed_t		frac;
     fixed_t		fracstep;	 
     int                 x;
+    int			texy, oldtexy;
  
     count = dc_yh - dc_yl; 
     if (count < 0) 
@@ -815,18 +904,30 @@ void R_DrawTranslatedColumnLow (void)
 
     // Looks familiar.
     fracstep = dc_iscale; 
-    frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+    frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     // Here we do an additional index re-mapping.
     do 
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
 	// Translation tables are used
 	//  to map certain colorramps to other ones,
 	//  used with PLAY sprites.
 	// Thus the "green" ramp of the player 0 sprite
-	//  is mapped to gray, red, black/indigo. 
-	*dest = dc_colormap[0][dc_translation[dc_source[frac>>FRACBITS]]];
-	*dest2 = dc_colormap[0][dc_translation[dc_source[frac>>FRACBITS]]];
+	//  is mapped to gray, red, black/indigo.
+	if (dc_fizzmask & dc_fmask) {
+	    *dest = dc_colormap[0][dc_translation[dc_source[frac >> FRACBITS]]];
+	    *dest2 = dc_colormap[0][dc_translation[dc_source[frac >> FRACBITS]]];
+	}
+
 	dest += SCREENWIDTH;
 	dest2 += SCREENWIDTH;
 	
@@ -843,6 +944,7 @@ void R_DrawTLColumn (void)
     pixel_t*		dest;
     fixed_t		frac;
     fixed_t		fracstep;
+    int			texy, oldtexy;
 
     count = dc_yh - dc_yl;
     if (count < 0)
@@ -862,16 +964,28 @@ void R_DrawTLColumn (void)
 
     fracstep = dc_iscale;
     frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     do
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
+	if (dc_fizzmask & dc_fmask) {
 #ifndef CRISPY_TRUECOLOR
-        // actual translucency map lookup taken from boom202s/R_DRAW.C:255
-        *dest = tranmap[(*dest<<8)+dc_colormap[0][dc_source[frac>>FRACBITS]]];
+	    // actual translucency map lookup taken from boom202s/R_DRAW.C:255
+	    *dest = tranmap[(*dest << 8) + dc_colormap[0][dc_source[frac >> FRACBITS]]];
 #else
-        const pixel_t destrgb = dc_colormap[0][dc_source[frac>>FRACBITS]];
-        *dest = blendfunc(*dest, destrgb);
+	    const pixel_t destrgb = dc_colormap[0][dc_source[frac>>FRACBITS]];
+	    *dest = blendfunc(*dest, destrgb);
 #endif
+	}
+
 	dest += SCREENWIDTH;
 
 	frac += fracstep;
@@ -887,6 +1001,7 @@ void R_DrawTLColumnLow (void)
     fixed_t		frac;
     fixed_t		fracstep;
     int                 x;
+    int			texy, oldtexy;
 
     count = dc_yh - dc_yl;
     if (count < 0)
@@ -909,17 +1024,29 @@ void R_DrawTLColumnLow (void)
 
     fracstep = dc_iscale;
     frac = dc_texturemid + (dc_yl-centery)*fracstep;
+    texy = frac >> FRACBITS;
+    oldtexy = texy;
 
     do
     {
+	const int texy = frac>>FRACBITS;
+	while (oldtexy < texy) {
+	    dc_fmask <<= 1;
+	    if (dc_fmask == 0) dc_fmask = 1;
+	    oldtexy++;
+	}
+
+	if (dc_fizzmask & dc_fmask) {
 #ifndef CRISPY_TRUECOLOR
-	*dest = tranmap[(*dest<<8)+dc_colormap[0][dc_source[frac>>FRACBITS]]];
-	*dest2 = tranmap[(*dest2<<8)+dc_colormap[0][dc_source[frac>>FRACBITS]]];
+	    *dest = tranmap[(*dest << 8) + dc_colormap[0][dc_source[frac >> FRACBITS]]];
+	    *dest2 = tranmap[(*dest2 << 8) + dc_colormap[0][dc_source[frac >> FRACBITS]]];
 #else
-	const pixel_t destrgb = dc_colormap[0][dc_source[frac>>FRACBITS]];
-	*dest = blendfunc(*dest, destrgb);
-	*dest2 = blendfunc(*dest2, destrgb);
+	    const pixel_t destrgb = dc_colormap[0][dc_source[frac>>FRACBITS]];
+	    *dest = blendfunc(*dest, destrgb);
+	    *dest2 = blendfunc(*dest2, destrgb);
 #endif
+	}
+
 	dest += SCREENWIDTH;
 	dest2 += SCREENWIDTH;
 

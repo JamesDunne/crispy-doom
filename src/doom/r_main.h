@@ -97,7 +97,6 @@ extern void		(*colfunc) (void);
 extern void		(*transcolfunc) (void);
 extern void		(*basecolfunc) (void);
 extern void		(*fuzzcolfunc) (void);
-extern void		(*fizzcolfunc) (void);
 extern void		(*tlcolfunc) (void);
 // No shadow effects on floors.
 extern void		(*spanfunc) (void);

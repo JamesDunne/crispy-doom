@@ -534,7 +534,7 @@ void P_MobjThinker (mobj_t* mobj)
     }
 
     // [JSD]
-    if (mobj->telefizztime) {
+    if (mobj->telefizztime > 0) {
     	mobj->telefizztime--;
     }
 

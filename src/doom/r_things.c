@@ -452,7 +452,6 @@ void R_DrawMaskedColumn (column_t* column)
 
 	    // Drawn by either R_DrawColumn
 	    //  or (SHADOW) R_DrawFuzzColumn.
-	    // [JSD] or R_DrawFizzColumn.
 	    colfunc ();
 	}
 	column = (column_t *)(  (byte *)column + column->length + 4);
@@ -516,11 +515,6 @@ R_DrawVisSprite
 	blendfunc = vis->blendfunc;
 #endif
     }
-    else if (vis->telefizztime != 0)
-    {
-	// [JSD]
-	colfunc = fizzcolfunc;
-    }
 
     dc_iscale = abs(vis->xiscale)>>detailshift;
     dc_texturemid = vis->texturemid;
@@ -547,12 +541,15 @@ R_DrawVisSprite
 #endif
 	column = (column_t *) ((byte *)patch +
 			       LONG(patch->columnofs[texturecolumn]));
-	if (vis->telefizztime != 0)
+	if (vis->telefizztime)
 	    dc_fizzmask = vis->telefizz[texturecolumn & 31];
+	else
+	    dc_fizzmask = 0xFFFFFFFFUL;
 	R_DrawMaskedColumn (column);
     }
 
     colfunc = basecolfunc;
+    dc_fizzmask = 0xFFFFFFFFUL;
 #ifdef CRISPY_TRUECOLOR
     blendfunc = I_BlendOver;
 #endif
