@@ -101,7 +101,7 @@ void P_TfogThinker(mobj_t *mobj)
     }
 
     // adjust visual properties to match target:
-    mobj->angle = target->angle;
+    mobj->angle = (target->angle - mobj->tracer->angle) + target->oldangle;
     mobj->sprite = target->sprite;
     mobj->frame = target->frame;
 
@@ -239,6 +239,7 @@ EV_Teleport
 		fog->target = thing;
 		fog->tracer = m; // record teleport target mobj
 		fog->angle = oldangle;
+		fog->oldangle = oldangle;
 		fog->sprite = thing->sprite;
 		fog->frame = thing->frame;
 		fog->flags &= ~MF_TRANSLUCENT;
