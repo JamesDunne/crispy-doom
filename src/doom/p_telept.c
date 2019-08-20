@@ -55,7 +55,7 @@ static void P_EnableFizz(mobj_t *thing)
     // [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
     for (q = 0; q < 32; q++)
     {
-	thing->telefizz[0][q] = (1 << pt_PickBit());
+	thing->telefizz[0][q] = 0; // (1 << pt_PickBit());
     }
 
     for (j = 1; j < 32; j++)
@@ -95,7 +95,7 @@ void P_TFogOutThinker(mobj_t *mobj)
 {
     mobj_t *target = mobj->target;
 
-    if (mobj->telefizztime < 0)
+    if (mobj->telefizztime < -1)
     {
 	mobj->telefizztime++;
     }
@@ -114,7 +114,12 @@ void P_TFogOutThinker(mobj_t *mobj)
     mobj->y = mobj->oldy + (target->y - mobj->tracer->y);
 #endif
 
-    if (!mobj->telefizztime)
+    if (mobj->tics > 0)
+    {
+	mobj->tics--;
+    }
+
+    if (!mobj->tics)
 	if (!P_SetMobjState (mobj, S_NULL))
 	    return;		// freed itself
 }
@@ -258,6 +263,8 @@ EV_Teleport
 		fog->sprite = thing->sprite;
 		fog->frame = thing->frame;
 		fog->flags &= ~MF_TRANSLUCENT;
+		// enough tics to let sound play out
+		fog->tics = 64;
 		// fizzle out effect using same fizzle pattern as object that is teleporting
 		fog->telefizztime = -32;
 		memcpy(fog->telefizz, thing->telefizz, sizeof(thing->telefizz));
