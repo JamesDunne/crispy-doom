@@ -91,7 +91,7 @@ static void P_EnableFizz(mobj_t *thing)
 }
 
 // [JSD] think function for MT_TFOG to mimic visuals of object that was teleported
-void P_TfogThinker(mobj_t *mobj)
+void P_TFogOutThinker(mobj_t *mobj)
 {
     mobj_t *target = mobj->target;
 
@@ -113,6 +113,19 @@ void P_TfogThinker(mobj_t *mobj)
 #endif
 
     if (!mobj->telefizztime)
+	if (!P_SetMobjState (mobj, S_NULL))
+	    return;		// freed itself
+}
+
+// just delay until sound plays through
+void P_TFogInThinker(mobj_t *mobj)
+{
+    if (mobj->tics > 0)
+    {
+        mobj->tics--;
+    }
+
+    if (!mobj->tics)
 	if (!P_SetMobjState (mobj, S_NULL))
 	    return;		// freed itself
 }
@@ -246,12 +259,16 @@ EV_Teleport
 		// fizzle out effect using same fizzle pattern as object that is teleporting
 		fog->telefizztime = -32;
 		memcpy(fog->telefizz, thing->telefizz, sizeof(thing->telefizz));
-		fog->thinker.function.acp1 = (actionf_p1)P_TfogThinker;
+		fog->thinker.function.acp1 = (actionf_p1)P_TFogOutThinker;
 		S_StartSound (fog, sfx_telept);
 
 		an = m->angle >> ANGLETOFINESHIFT;
 		fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
 			       , thing->z + zoffs, MT_TFOG);
+		// enough tics to let sound play out
+		fog->tics = 64;
+		fog->sprite = SPR_TNT1;
+		fog->thinker.function.acp1 = (actionf_p1)P_TFogInThinker;
 		// emit sound, where?
 		S_StartSound (fog, sfx_telept);
 
