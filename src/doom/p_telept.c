@@ -100,10 +100,12 @@ void P_TFogOutThinker(mobj_t *mobj)
 	mobj->telefizztime++;
     }
 
+#if 0
     // adjust visual properties to match target:
     mobj->angle = (target->angle - mobj->tracer->angle) + target->oldangle;
     mobj->sprite = target->sprite;
     mobj->frame = target->frame;
+#endif
 
     // disabled: causes bugs where monsters can appear to move through walls
 #if 0
