@@ -765,7 +765,7 @@ void R_ProjectSprite (mobj_t* thing)
 	// fixed map
 	vis->colormap[0] = vis->colormap[1] = fixedcolormap;
     }
-    else if (thing->frame & FF_FULLBRIGHT)
+    else if (thing->frame & FF_FULLBRIGHT || vis->telefizztime != 0)	// [JSD] when telefizztime, be full bright
     {
 	// full bright
 	vis->colormap[0] = vis->colormap[1] = colormaps;

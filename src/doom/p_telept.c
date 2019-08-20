@@ -220,12 +220,13 @@ EV_Teleport
 		}
 
 		// spawn teleport fog at source and destination
-		fog = P_SpawnMobj (oldx, oldy, oldz + zoffs, MT_TFOG);
-		fog->target = thing;
+		fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
+		// customize fog object to be a visual clone of object that is teleporting
+		fog->angle = oldangle;
 		fog->sprite = thing->sprite;
-		fog->angle = thing->angle;
 		fog->frame = thing->frame;
 		fog->flags &= ~MF_TRANSLUCENT;
+		// fizzle out effect using same fizzle pattern as object that is teleporting
 		fog->telefizztime = -32;
 		memcpy(fog->telefizz, thing->telefizz, sizeof(thing->telefizz));
 		fog->thinker.function.acp1 = (actionf_p1)P_TfogThinker;
