@@ -192,7 +192,6 @@ void R_DrawFizzColumn (void)
     fixed_t		frac;
     fixed_t		fracstep;
     int			heightmask = dc_texheight - 1;
-    uint32_t		fmask;
     int			texy, oldtexy;
 
     count = dc_yh - dc_yl;

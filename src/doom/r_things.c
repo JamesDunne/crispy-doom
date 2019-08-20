@@ -516,7 +516,7 @@ R_DrawVisSprite
 	blendfunc = vis->blendfunc;
 #endif
     }
-    else if (vis->telefizztime > 0)
+    else if (vis->telefizztime != 0)
     {
     	// [JSD] TODO: _Low variant
     	colfunc = R_DrawFizzColumn;
@@ -547,7 +547,7 @@ R_DrawVisSprite
 #endif
 	column = (column_t *) ((byte *)patch +
 			       LONG(patch->columnofs[texturecolumn]));
-	if (vis->telefizztime > 0)
+	if (vis->telefizztime != 0)
 	    dc_fizzmask = vis->telefizz[texturecolumn & 31];
 	R_DrawMaskedColumn (column);
     }
@@ -725,7 +725,9 @@ void R_ProjectSprite (mobj_t* thing)
     vis->mobjflags = thing->flags;
     vis->telefizztime = thing->telefizztime; // [JSD]
     if (vis->telefizztime > 0) {
-        memcpy(vis->telefizz, thing->telefizz[32 - thing->telefizztime], sizeof(vis->telefizz));
+	memcpy(vis->telefizz, thing->telefizz[32 - thing->telefizztime], sizeof(vis->telefizz));
+    } else if (vis->telefizztime < 0) {
+	memcpy(vis->telefizz, thing->telefizz[-1 - thing->telefizztime], sizeof(vis->telefizz));
     }
     vis->scale = xscale<<detailshift;
     vis->gx = interpx;

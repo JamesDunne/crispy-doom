@@ -34,15 +34,73 @@
 // State.
 #include "r_state.h"
 
+// [JSD] uses M_Random() to select a bit number between 0 and 31
 static int pt_PickBit(void)
 {
     int b = 0;
+    // 0x81 is used due to average value of rndtable at 128.8ish instead of 127.5
+    // rndtable is not perfectly distributed
     b |= (M_Random() >= 0x81) ? 1<<0 : 0;
     b |= (M_Random() >= 0x81) ? 1<<1 : 0;
     b |= (M_Random() >= 0x81) ? 1<<2 : 0;
     b |= (M_Random() >= 0x81) ? 1<<3 : 0;
     b |= (M_Random() >= 0x81) ? 1<<4 : 0;
     return b;
+}
+
+// [JSD]
+void P_TfogThinker(mobj_t *mobj)
+{
+    if (mobj->telefizztime < 0)
+    {
+	mobj->telefizztime++;
+    }
+
+    if (!mobj->telefizztime)
+	if (!P_SetMobjState (mobj, S_NULL))
+	    return;		// freed itself
+}
+
+static void P_EnableFizz(mobj_t *thing)
+{
+    uint32_t j, q, n;
+
+    // [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
+    for (q = 0; q < 32; q++)
+    {
+	thing->telefizz[0][q] = (1 << pt_PickBit());
+    }
+
+    for (j = 1; j < 32; j++)
+    {
+	for (q = 0; q < 32; q++)
+	{
+	    uint32_t t = thing->telefizz[j - 1][q];
+	    uint32_t k;
+
+	    k = pt_PickBit();
+
+	    n = 0;
+	    while (++n <= 17)
+	    {
+		if ((t & (1 << k)) == 0) break;
+
+		k = pt_PickBit();
+	    }
+
+	    if (t & (1<<k))
+	    {
+		// find a clear bit:
+		for (k=0,n=1;k<32;k++,n<<=1)
+		{
+		    if ((t & n) == 0) break;
+		}
+	    }
+
+	    t |= (1 << k);
+	    thing->telefizz[j][q] = t;
+	}
+    }
 }
 
 //
@@ -64,6 +122,7 @@ EV_Teleport
     fixed_t	oldx;
     fixed_t	oldy;
     fixed_t	oldz;
+    fixed_t	zoffs;
     angle_t oldangle;
     fixed_t	oldmomx;
     fixed_t	oldmomy;
@@ -134,42 +193,7 @@ EV_Teleport
 
 		// [JSD] enable fizz effect:
 		thing->telefizztime = 32;
-		// [JSD] build up a bitmask where bits are randomly enabled per frame and build on top of the last frame:
-		for (q = 0; q < 32; q++)
-		{
-		    thing->telefizz[0][q] = (1 << pt_PickBit());
-		}
-
-		for (j = 1; j < 32; j++)
-		{
-		    for (q = 0; q < 32; q++)
-		    {
-			uint32_t t = thing->telefizz[j - 1][q];
-			uint32_t k;
-
-			k = pt_PickBit();
-
-			n = 0;
-			while (++n <= 17)
-			{
-			    if ((t & (1 << k)) == 0) break;
-
-			    k = pt_PickBit();
-			}
-
-			if (t & (1<<k))
-			{
-			    // find a clear bit:
-			    for (k=0,n=1;k<32;k++,n<<=1)
-			    {
-				if ((t & n) == 0) break;
-			    }
-			}
-
-			t |= (1 << k);
-			thing->telefizz[j][q] = t;
-		    }
-		}
+		P_EnableFizz(thing);
 
 		thing->angle = m->angle;
 		if (thing->flags & MF_MISSILE)
@@ -185,28 +209,31 @@ EV_Teleport
 		    thing->momy = FixedMul(oldmomy, c) + FixedMul(oldmomx, s);
 		    // kill Z momentum so missiles don't fly upwards or downwards out of teleporter:
 		    thing->momz = 0;
-
-		    // spawn teleport fog at source and destination
-		    fog = P_SpawnMobj (oldx, oldy, oldz - 4*8*FRACUNIT, MT_TFOG);
-		    S_StartSound (fog, sfx_telept);
-		    an = m->angle >> ANGLETOFINESHIFT;
-		    fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
-				   , thing->z - 4*8*FRACUNIT, MT_TFOG);
+		    // spawn teleport fog up off the floor:
+		    zoffs = -4*8*FRACUNIT;
 		}
 		else
 		{
 		    // kill momentum:
 		    thing->momx = thing->momy = thing->momz = 0;
-
-		    // spawn teleport fog at source and destination
-		    fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
-		    S_StartSound (fog, sfx_telept);
-		    an = m->angle >> ANGLETOFINESHIFT;
-		    fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
-				   , thing->z, MT_TFOG);
-
+		    zoffs = 0;
 		}
 
+		// spawn teleport fog at source and destination
+		fog = P_SpawnMobj (oldx, oldy, oldz + zoffs, MT_TFOG);
+		fog->target = thing;
+		fog->sprite = thing->sprite;
+		fog->angle = thing->angle;
+		fog->frame = thing->frame;
+		fog->flags &= ~MF_TRANSLUCENT;
+		fog->telefizztime = -32;
+		memcpy(fog->telefizz, thing->telefizz, sizeof(thing->telefizz));
+		fog->thinker.function.acp1 = (actionf_p1)P_TfogThinker;
+		S_StartSound (fog, sfx_telept);
+
+		an = m->angle >> ANGLETOFINESHIFT;
+		fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
+			       , thing->z + zoffs, MT_TFOG);
 		// emit sound, where?
 		S_StartSound (fog, sfx_telept);
 
