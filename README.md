@@ -1,3 +1,16 @@
+# My Fork
+
+My own fork of Crispy Doom offers these changes over vanilla Crispy Doom.
+
+* All projectiles (except hitscans) go through teleporters and retain their momentum through teleportation
+
+* New "fizzle" pixel effect used to show teleporting objects pixel by pixel from the teleporter to the destination; replaces old SPR_TFOG animation; objects in teleportation phase are full-bright
+
+Ideas for future enhancement:
+
+* Allow Arch-Viles to resurrect bosses
+* Introduce target leading for enemy projectile aiming, scaled with difficulty level, i.e. they will aim to where their projectile intercepts you assuming your velocity is constant
+
 # Crispy Doom
 [![Crispy Doom Icon](https://www.chocolate-doom.org/wiki/images/b/be/Crispy-doom.png)](https://github.com/fabiangreffrath/crispy-doom)
 
