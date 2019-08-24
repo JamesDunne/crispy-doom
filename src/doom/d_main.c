@@ -434,6 +434,7 @@ void D_BindVariables(void)
     M_BindIntVariable("crispy_extautomap",      &crispy->extautomap);
     M_BindIntVariable("crispy_extsaveg",        &crispy->extsaveg);
     M_BindIntVariable("crispy_flipcorpses",     &crispy->flipcorpses);
+    M_BindIntVariable("crispy_teleportfizzle",  &crispy->teleportfizzle);
     M_BindIntVariable("crispy_freeaim",         &crispy->freeaim);
     M_BindIntVariable("crispy_freelook",        &crispy->freelook);
     M_BindIntVariable("crispy_hires",           &crispy->hires);
@@ -445,6 +446,7 @@ void D_BindVariables(void)
     M_BindIntVariable("crispy_pitch",           &crispy->pitch);
     M_BindIntVariable("crispy_playercoords",    &crispy->playercoords);
     M_BindIntVariable("crispy_recoil",          &crispy->recoil);
+    M_BindIntVariable("crispy_missilesteleport",&crispy->missilesteleport);
     M_BindIntVariable("crispy_secretmessage",   &crispy->secretmessage);
     M_BindIntVariable("crispy_smoothlight",     &crispy->smoothlight);
     M_BindIntVariable("crispy_smoothscaling",   &crispy->smoothscaling);

@@ -97,6 +97,9 @@ typedef struct
 	const char *platform;
 
 	void (*post_rendering_hook) (void);
+
+	int missilesteleport;
+	int teleportfizzle;
 } crispy_t;
 
 extern crispy_t *const crispy;

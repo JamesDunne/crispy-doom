@@ -1916,6 +1916,14 @@ static default_t extra_defaults_list[] =
     //!
     // @game doom
     //
+    // Enable Mirrored Corpses.
+    //
+
+    CONFIG_VARIABLE_INT(crispy_teleportfizzle),
+
+    //!
+    // @game doom
+    //
     // Enable vertical aiming.
     //
 
@@ -2000,6 +2008,14 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(crispy_recoil),
+
+    //!
+    // @game doom
+    //
+    // Enable missiles going through teleporters.
+    //
+
+    CONFIG_VARIABLE_INT(crispy_missilesteleport),
 
     //!
     // @game doom

@@ -173,8 +173,8 @@ EV_Teleport
     fixed_t	oldmomz;
 
     // don't teleport missiles
-    //if (thing->flags & MF_MISSILE)
-	//return 0;		
+    if (!crispy->missilesteleport && ((thing->flags & MF_MISSILE) != 0))
+	return 0;
 
     // Don't teleport if hit back of line,
     //  so you can get out of teleporter.
@@ -235,11 +235,14 @@ EV_Teleport
 
 		// don't move for a bit
 		if (thing->player)
-		    thing->reactiontime = 18;	
+		    thing->reactiontime = 18;
 
-		// [JSD] enable fizz effect:
-		thing->telefizztime = 32;
-		P_EnableFizz(thing);
+		if (crispy->teleportfizzle)
+		{
+		    // [JSD] enable fizz effect:
+		    thing->telefizztime = 32;
+		    P_EnableFizz(thing);
+		}
 
 		thing->angle = m->angle;
 		if (thing->flags & MF_MISSILE)
@@ -267,33 +270,39 @@ EV_Teleport
 
 		// spawn teleport fog at source and destination
 		fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
-		// customize fog object to be a visual clone of object that is teleporting
-		fog->target = thing;
-		fog->tracer = m; // record teleport target mobj
-		fog->angle = oldangle;
-		fog->oldangle = oldangle;
-		fog->sprite = thing->sprite;
-		fog->frame = thing->frame;
-		fog->flags = MF_NOCLIP | MF_NOBLOCKMAP | MF_NOGRAVITY;
-		// copy in momentum:
-		fog->momx = oldmomx;
-		fog->momy = oldmomy;
-		fog->momz = oldmomz;
-		// enough tics to let sound play out
-		fog->tics = 64;
-		// fizzle out effect using same fizzle pattern as object that is teleporting
-		fog->telefizztime = -32;
-		memcpy(fog->telefizz, thing->telefizz, sizeof(thing->telefizz));
-		fog->thinker.function.acp1 = (actionf_p1)P_TFogOutThinker;
+		if (crispy->teleportfizzle)
+		{
+		    // customize fog object to be a visual clone of object that is teleporting
+		    fog->target = thing;
+		    fog->tracer = m; // record teleport target mobj
+		    fog->angle = oldangle;
+		    fog->oldangle = oldangle;
+		    fog->sprite = thing->sprite;
+		    fog->frame = thing->frame;
+		    fog->flags = MF_NOCLIP | MF_NOBLOCKMAP | MF_NOGRAVITY;
+		    // copy in momentum:
+		    fog->momx = oldmomx;
+		    fog->momy = oldmomy;
+		    fog->momz = oldmomz;
+		    // enough tics to let sound play out
+		    fog->tics = 64;
+		    // fizzle out effect using same fizzle pattern as object that is teleporting
+		    fog->telefizztime = -32;
+		    memcpy(fog->telefizz, thing->telefizz, sizeof(thing->telefizz));
+		    fog->thinker.function.acp1 = (actionf_p1) P_TFogOutThinker;
+		}
 		S_StartSound (fog, sfx_telept);
 
 		an = m->angle >> ANGLETOFINESHIFT;
 		fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
 			       , thing->z + zoffs, MT_TFOG);
-		// enough tics to let sound play out
-		fog->tics = 64;
-		fog->sprite = SPR_TNT1;
-		fog->thinker.function.acp1 = (actionf_p1)P_TFogInThinker;
+		if (crispy->teleportfizzle)
+		{
+		    // enough tics to let sound play out
+		    fog->tics = 64;
+		    fog->sprite = SPR_TNT1;
+		    fog->thinker.function.acp1 = (actionf_p1) P_TFogInThinker;
+		}
 		// emit sound, where?
 		S_StartSound (fog, sfx_telept);
 

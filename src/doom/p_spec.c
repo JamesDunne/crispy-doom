@@ -611,6 +611,7 @@ P_CrossSpecialLinePtr
 	  case MT_TROOPSHOT:
 	  case MT_HEADSHOT:
 	  case MT_BRUISERSHOT:
+	    if (!crispy->missilesteleport) return;
 	    if (line->special != 39 && line->special != 97) return;
 	    break;
 	    

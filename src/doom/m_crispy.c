@@ -303,6 +303,11 @@ void M_CrispyToggleFlipcorpses(int choice)
     crispy->flipcorpses = !crispy->flipcorpses;
 }
 
+void M_CrispyToggleTeleportFizzle(int choice)
+{
+    crispy->teleportfizzle = !crispy->teleportfizzle;
+}
+
 void M_CrispyToggleFreeaim(int choice)
 {
     if (!crispy->singleplayer)
@@ -438,6 +443,12 @@ void M_CrispyToggleRecoil(int choice)
 
     // [crispy] update the "critical" struct
     CheckCrispySingleplayer(!demorecording && !demoplayback && !netgame);
+}
+
+void M_CrispyToggleMissilesTeleport(int choice)
+{
+    choice = 0;
+    crispy->missilesteleport = !crispy->missilesteleport;
 }
 
 void M_CrispyToggleSecretmessage(int choice)
